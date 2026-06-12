@@ -3,10 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- PWA: iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Minhas Contas">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="icon.svg">
+<link rel="apple-touch-startup-image" href="icon.svg">
+
+<!-- PWA: Android + Chrome -->
 <meta name="theme-color" content="#0d0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+
+<!-- SEO / Share -->
+<meta name="description" content="Controle financeiro pessoal — simples, rápido e direto do seu celular.">
+<meta property="og:title" content="Como estão minhas contas?">
+<meta property="og:description" content="Controle financeiro pessoal">
+<meta property="og:image" content="icon.svg">
+
 <title>Como estão minhas contas?</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -387,9 +403,170 @@ body {
   body { max-width:430px; margin:0 auto; box-shadow:0 0 60px rgba(0,0,0,.5); }
   .kpi-row { grid-template-columns:repeat(2,1fr); }
 }
+
+/* ══ LOGIN SCREEN ══════════════════════════════════════════ */
+#login-screen {
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:32px 24px;
+  padding-top:calc(var(--safe-top) + 32px);
+  padding-bottom:calc(var(--safe-bot) + 32px);
+}
+#login-screen.hidden { display:none; }
+
+.login-logo {
+  font-size:56px; margin-bottom:6px;
+  filter:drop-shadow(0 4px 24px rgba(79,142,247,.3));
+}
+.login-title {
+  font-size:26px; font-weight:800; text-align:center;
+  margin-bottom:6px; letter-spacing:-.5px;
+}
+.login-title em { color:var(--acc); font-style:normal; }
+.login-sub {
+  font-size:14px; color:var(--mut); text-align:center;
+  margin-bottom:36px; line-height:1.5; max-width:280px;
+}
+
+/* ── TABS ── */
+.login-tabs {
+  display:flex; background:var(--sur2); border-radius:12px;
+  padding:3px; gap:2px; margin-bottom:28px; width:100%; max-width:320px;
+}
+.login-tab {
+  flex:1; padding:10px; border:none; border-radius:9px;
+  background:transparent; color:var(--mut); font-size:13px;
+  font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+  transition:all .2s;
+}
+.login-tab.act { background:var(--sur); color:var(--txt); box-shadow:0 2px 8px rgba(0,0,0,.3); }
+
+/* ── PANELS ── */
+.login-panel { width:100%; max-width:320px; display:none; flex-direction:column; gap:14px; }
+.login-panel.act { display:flex; }
+
+/* ── PIN PAD ── */
+.pin-display {
+  display:flex; gap:12px; justify-content:center;
+  margin-bottom:4px;
+}
+.pin-dot {
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid var(--brd); background:transparent;
+  transition:all .15s;
+}
+.pin-dot.filled { background:var(--acc); border-color:var(--acc); }
+.pin-dot.error { background:var(--red); border-color:var(--red); }
+.pin-dot.success { background:var(--grn); border-color:var(--grn); }
+
+.pin-label {
+  text-align:center; font-size:13px; color:var(--mut);
+  margin-bottom:16px; min-height:18px;
+}
+
+.pin-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:10px; width:100%;
+}
+.pin-key {
+  aspect-ratio:1; border-radius:14px; border:1px solid var(--brd);
+  background:var(--sur); color:var(--txt); font-size:22px;
+  font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .12s; -webkit-tap-highlight-color:transparent;
+  flex-direction:column; gap:2px;
+}
+.pin-key:active { transform:scale(.92); background:var(--sur2); }
+.pin-key.zero { grid-column:2; }
+.pin-key.del { background:transparent; border-color:transparent; font-size:20px; }
+.pin-key.del:active { background:var(--sur2); }
+.pin-key sub { font-size:8px; font-weight:400; color:var(--mut); letter-spacing:.5px; }
+
+/* ── SENHA (texto) ── */
+.pass-input {
+  width:100%; background:var(--sur2); border:1px solid var(--brd);
+  border-radius:12px; color:var(--txt); padding:14px 16px;
+  font-size:18px; font-family:'JetBrains Mono',monospace;
+  letter-spacing:4px; text-align:center;
+  -webkit-appearance:none;
+}
+.pass-input:focus { outline:none; border-color:var(--acc); }
+
+.login-btn {
+  width:100%; padding:16px; border-radius:14px; border:none;
+  background:var(--acc); color:#fff; font-size:16px; font-weight:700;
+  cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s;
+}
+.login-btn:active { transform:scale(.98); opacity:.9; }
+.login-btn.danger { background:rgba(247,92,92,.15); color:var(--red); border:1px solid rgba(247,92,92,.2); margin-top:4px; font-size:13px; padding:12px; }
+
+/* setup vs unlock labels */
+.login-hint { font-size:12px; color:var(--mut); text-align:center; }
+.login-hint a { color:var(--acc); cursor:pointer; }
+
+/* shake animation */
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+.shake { animation:shake .4s ease; }
+
 </style>
 </head>
 <body>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="login-screen">
+  <div class="login-logo">💰</div>
+  <div class="login-title">Como estão <em>minhas contas?</em></div>
+  <p class="login-sub" id="login-sub">Seu controle financeiro pessoal</p>
+
+  <!-- TABS: PIN / Senha -->
+  <div class="login-tabs" id="login-tabs">
+    <button class="login-tab act" id="tab-pin" onclick="switchLoginTab('pin')">PIN</button>
+    <button class="login-tab" id="tab-pass" onclick="switchLoginTab('pass')">Senha</button>
+  </div>
+
+  <!-- PIN PANEL -->
+  <div class="login-panel act" id="panel-pin">
+    <div class="pin-display" id="pin-display">
+      <div class="pin-dot" id="pd-0"></div>
+      <div class="pin-dot" id="pd-1"></div>
+      <div class="pin-dot" id="pd-2"></div>
+      <div class="pin-dot" id="pd-3"></div>
+    </div>
+    <div class="pin-label" id="pin-label">Digite seu PIN de 4 dígitos</div>
+    <div class="pin-grid" id="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2<sub>ABC</sub></button>
+      <button class="pin-key" onclick="pinKey('3')">3<sub>DEF</sub></button>
+      <button class="pin-key" onclick="pinKey('4')">4<sub>GHI</sub></button>
+      <button class="pin-key" onclick="pinKey('5')">5<sub>JKL</sub></button>
+      <button class="pin-key" onclick="pinKey('6')">6<sub>MNO</sub></button>
+      <button class="pin-key" onclick="pinKey('7')">7<sub>PQRS</sub></button>
+      <button class="pin-key" onclick="pinKey('8')">8<sub>TUV</sub></button>
+      <button class="pin-key" onclick="pinKey('9')">9<sub>WXYZ</sub></button>
+      <button class="pin-key zero" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="login-hint" id="pin-hint"></div>
+    <button class="login-btn danger" id="reset-btn" onclick="resetAuth()" style="display:none">🗑 Redefinir PIN / Senha</button>
+  </div>
+
+  <!-- SENHA PANEL -->
+  <div class="login-panel" id="panel-pass">
+    <input type="password" class="pass-input" id="pass-input" placeholder="••••••••" maxlength="32" oninput="passChanged()" onkeydown="if(event.key==='Enter')submitPass()">
+    <button class="login-btn" onclick="submitPass()" id="pass-btn">Entrar</button>
+    <div class="login-hint" id="pass-hint"></div>
+    <button class="login-btn danger" id="reset-btn-pass" onclick="resetAuth()" style="display:none">🗑 Redefinir PIN / Senha</button>
+  </div>
+</div>
+
 
 <!-- HEADER -->
 <div class="header">
@@ -1160,10 +1337,372 @@ setInterval(()=>{if(cfg.binId&&cfg.apiKey)syncVoice();},60000);
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
-loadAll();
-renderMonthStrip();
-updateHeaderSub();
-switchNav('dash');
+// Auth guards the app init — unlockApp() calls loadAll etc.
+initAuth();
+
+// ═══════════════════════════════════════════════════════════
+// AUTH SYSTEM
+// ═══════════════════════════════════════════════════════════
+const AUTH_KEY = 'mcauth_v1';
+// modes: 'none' (first time), 'setup_pin', 'unlock_pin', 'setup_pass', 'unlock_pass'
+
+let authState = {
+  mode: 'none',      // current screen mode
+  pinBuffer: '',     // digits typed so far
+  setupFirst: '',    // first entry during setup (for confirm)
+  loginTab: 'pin',   // 'pin' or 'pass'
+  attempts: 0,
+  locked: false,
+  lockUntil: 0,
+};
+
+function getStoredAuth() {
+  try { return JSON.parse(localStorage.getItem(AUTH_KEY)) || null; } catch(e) { return null; }
+}
+function storeAuth(obj) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify(obj));
+}
+
+// Simple hash (not cryptographic — this is local protection only)
+function simpleHash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
+function initAuth() {
+  const stored = getStoredAuth();
+  const screen = document.getElementById('login-screen');
+
+  if (!stored || !stored.hash) {
+    // First time — setup mode
+    authState.mode = 'setup_pin';
+    showLoginSetup();
+  } else {
+    // Has auth — unlock mode
+    authState.mode = stored.type === 'pass' ? 'unlock_pass' : 'unlock_pin';
+    showLoginUnlock(stored.type);
+  }
+  screen.classList.remove('hidden');
+}
+
+function showLoginSetup() {
+  document.getElementById('login-sub').textContent = 'Configure sua proteção para começar';
+  document.getElementById('login-tabs').style.display = 'flex';
+  document.getElementById('pin-label').textContent = 'Crie um PIN de 4 dígitos';
+  document.getElementById('pin-hint').textContent = '';
+  document.getElementById('pass-btn').textContent = 'Criar Senha';
+  document.getElementById('pass-hint').textContent = 'Mínimo 4 caracteres';
+  document.getElementById('reset-btn').style.display = 'none';
+  document.getElementById('reset-btn-pass').style.display = 'none';
+  clearPinDisplay();
+}
+
+function showLoginUnlock(type) {
+  document.getElementById('login-sub').textContent = 'Bem-vindo de volta 👋';
+  document.getElementById('login-tabs').style.display = 'none';
+  if (type === 'pass') {
+    switchLoginTab('pass');
+    document.getElementById('pass-btn').textContent = 'Entrar';
+    document.getElementById('pass-hint').textContent = '';
+    document.getElementById('reset-btn-pass').style.display = 'block';
+  } else {
+    switchLoginTab('pin');
+    document.getElementById('pin-label').textContent = 'Digite seu PIN';
+    document.getElementById('reset-btn').style.display = 'block';
+  }
+}
+
+function switchLoginTab(tab) {
+  authState.loginTab = tab;
+  document.getElementById('tab-pin').className = 'login-tab' + (tab === 'pin' ? ' act' : '');
+  document.getElementById('tab-pass').className = 'login-tab' + (tab === 'pass' ? ' act' : '');
+  document.getElementById('panel-pin').className = 'login-panel' + (tab === 'pin' ? ' act' : '');
+  document.getElementById('panel-pass').className = 'login-panel' + (tab === 'pass' ? ' act' : '');
+  if (tab === 'pin') {
+    authState.mode = authState.mode.startsWith('unlock') ? 'unlock_pin' : 'setup_pin';
+    authState.pinBuffer = '';
+    authState.setupFirst = '';
+    clearPinDisplay();
+  } else {
+    authState.mode = authState.mode.startsWith('unlock') ? 'unlock_pass' : 'setup_pass';
+    document.getElementById('pass-input').value = '';
+  }
+}
+
+// ── PIN ──────────────────────────────────────────────────
+function clearPinDisplay(state) {
+  authState.pinBuffer = '';
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd-' + i);
+    d.className = 'pin-dot' + (state ? ' ' + state : '');
+  }
+}
+
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('pd-' + i);
+    d.className = 'pin-dot' + (i < authState.pinBuffer.length ? ' filled' : '');
+  }
+}
+
+function pinKey(digit) {
+  if (authState.locked) { showLockTimer(); return; }
+  if (authState.pinBuffer.length >= 4) return;
+  authState.pinBuffer += digit;
+  updatePinDisplay();
+  if (authState.pinBuffer.length === 4) {
+    setTimeout(() => handlePinComplete(), 120);
+  }
+}
+
+function pinDel() {
+  if (authState.pinBuffer.length > 0) {
+    authState.pinBuffer = authState.pinBuffer.slice(0, -1);
+    updatePinDisplay();
+  }
+}
+
+function handlePinComplete() {
+  const pin = authState.pinBuffer;
+  if (authState.mode === 'setup_pin') {
+    if (!authState.setupFirst) {
+      // First entry
+      authState.setupFirst = pin;
+      clearPinDisplay();
+      document.getElementById('pin-label').textContent = 'Confirme seu PIN';
+      document.getElementById('pin-hint').textContent = '';
+    } else {
+      // Confirm
+      if (pin === authState.setupFirst) {
+        // Save
+        storeAuth({ type: 'pin', hash: simpleHash(pin) });
+        pinSuccess();
+      } else {
+        authState.setupFirst = '';
+        clearPinDisplay('error');
+        document.getElementById('pin-label').textContent = 'PINs diferentes. Tente novamente';
+        document.getElementById('pin-hint').textContent = '';
+        setTimeout(() => {
+          clearPinDisplay();
+          document.getElementById('pin-label').textContent = 'Crie um PIN de 4 dígitos';
+        }, 1000);
+      }
+    }
+  } else if (authState.mode === 'unlock_pin') {
+    const stored = getStoredAuth();
+    if (simpleHash(pin) === stored.hash) {
+      authState.attempts = 0;
+      pinSuccess();
+    } else {
+      authState.attempts++;
+      clearPinDisplay('error');
+      document.getElementById('pin-grid').classList.add('shake');
+      setTimeout(() => document.getElementById('pin-grid').classList.remove('shake'), 400);
+      if (authState.attempts >= 5) {
+        startLockout();
+      } else {
+        document.getElementById('pin-label').textContent = `PIN incorreto · ${5 - authState.attempts} tentativa${5 - authState.attempts !== 1 ? 's' : ''} restante${5 - authState.attempts !== 1 ? 's' : ''}`;
+        setTimeout(() => { clearPinDisplay(); updatePinDisplay(); }, 600);
+      }
+    }
+  }
+}
+
+function pinSuccess() {
+  clearPinDisplay('success');
+  setTimeout(() => unlockApp(), 350);
+}
+
+// ── SENHA ────────────────────────────────────────────────
+function passChanged() {
+  // nothing needed live
+}
+
+function submitPass() {
+  const val = document.getElementById('pass-input').value;
+  if (!val || val.length < 4) {
+    document.getElementById('pass-hint').textContent = 'Mínimo 4 caracteres';
+    document.getElementById('pass-input').classList.add('shake');
+    setTimeout(() => document.getElementById('pass-input').classList.remove('shake'), 400);
+    return;
+  }
+  if (authState.mode === 'setup_pass') {
+    if (!authState.setupFirst) {
+      authState.setupFirst = val;
+      document.getElementById('pass-input').value = '';
+      document.getElementById('pass-btn').textContent = 'Confirmar Senha';
+      document.getElementById('pass-hint').textContent = 'Digite a senha novamente para confirmar';
+    } else {
+      if (val === authState.setupFirst) {
+        storeAuth({ type: 'pass', hash: simpleHash(val) });
+        unlockApp();
+      } else {
+        authState.setupFirst = '';
+        document.getElementById('pass-input').value = '';
+        document.getElementById('pass-btn').textContent = 'Criar Senha';
+        document.getElementById('pass-hint').textContent = 'Senhas diferentes. Tente novamente.';
+        document.getElementById('pass-input').classList.add('shake');
+        setTimeout(() => document.getElementById('pass-input').classList.remove('shake'), 400);
+      }
+    }
+  } else if (authState.mode === 'unlock_pass') {
+    const stored = getStoredAuth();
+    if (simpleHash(val) === stored.hash) {
+      authState.attempts = 0;
+      unlockApp();
+    } else {
+      authState.attempts++;
+      document.getElementById('pass-input').value = '';
+      document.getElementById('pass-input').classList.add('shake');
+      setTimeout(() => document.getElementById('pass-input').classList.remove('shake'), 400);
+      if (authState.attempts >= 5) {
+        startLockout();
+      } else {
+        document.getElementById('pass-hint').textContent = `Senha incorreta · ${5 - authState.attempts} tentativa${5 - authState.attempts !== 1 ? 's' : ''} restante${5 - authState.attempts !== 1 ? 's' : ''}`;
+      }
+    }
+  }
+}
+
+// ── LOCKOUT ──────────────────────────────────────────────
+function startLockout() {
+  authState.locked = true;
+  authState.lockUntil = Date.now() + 30000; // 30 seconds
+  showLockTimer();
+  const iv = setInterval(() => {
+    if (Date.now() >= authState.lockUntil) {
+      authState.locked = false;
+      authState.attempts = 0;
+      clearInterval(iv);
+      clearPinDisplay();
+      document.getElementById('pin-label').textContent = 'Digite seu PIN';
+      document.getElementById('pass-hint').textContent = '';
+    } else {
+      showLockTimer();
+    }
+  }, 1000);
+}
+
+function showLockTimer() {
+  const remaining = Math.ceil((authState.lockUntil - Date.now()) / 1000);
+  const msg = `Bloqueado por ${remaining}s após muitas tentativas`;
+  document.getElementById('pin-label').textContent = msg;
+  document.getElementById('pass-hint').textContent = msg;
+}
+
+// ── RESET ────────────────────────────────────────────────
+function resetAuth() {
+  if (!confirm('Redefinir proteção? Seus dados financeiros NÃO serão apagados.')) return;
+  localStorage.removeItem(AUTH_KEY);
+  authState = { mode: 'setup_pin', pinBuffer: '', setupFirst: '', loginTab: 'pin', attempts: 0, locked: false, lockUntil: 0 };
+  switchLoginTab('pin');
+  showLoginSetup();
+}
+
+// ── UNLOCK ───────────────────────────────────────────────
+function unlockApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  // init app
+  loadAll();
+  renderMonthStrip();
+  updateHeaderSub();
+  switchNav('dash');
+  window.dispatchEvent(new Event('appReady'));
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// PWA — Service Worker + Icon generation
+// ═══════════════════════════════════════════════════════════
+(function initPWA() {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('[SW] Registered:', reg.scope);
+          // Check for updates
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                toast('✨ Atualização disponível — reabra o app');
+              }
+            });
+          });
+        })
+        .catch(err => console.log('[SW] Error:', err));
+    });
+  }
+
+  // Generate PNG icons from SVG for better iOS compat
+  function generateIcons() {
+    const svgUrl = './icon.svg';
+    [192, 512].forEach(size => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, size, size);
+        const pngUrl = canvas.toDataURL('image/png');
+        // Store generated PNG for manifest reference
+        try { sessionStorage.setItem('icon-' + size, pngUrl); } catch(e) {}
+      };
+      img.src = svgUrl;
+    });
+  }
+  generateIcons();
+
+  // Handle ?action=new shortcut from manifest
+  if (window.location.search.includes('action=new')) {
+    window.addEventListener('appReady', () => {
+      setTimeout(() => openAddModal('despesa'), 500);
+    });
+  }
+
+  // iOS "Add to Home Screen" prompt nudge (shown once)
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const nudgeSeen = localStorage.getItem('pwa_nudge');
+  if (isIOS && !isStandalone && !nudgeSeen) {
+    setTimeout(() => {
+      showInstallNudge();
+      localStorage.setItem('pwa_nudge', '1');
+    }, 4000);
+  }
+})();
+
+function showInstallNudge() {
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:fixed; bottom:calc(var(--nav-h) + var(--safe-bot) + 12px);
+    left:12px; right:12px; z-index:800;
+    background:#1c2030; border:1px solid #252a3a;
+    border-radius:16px; padding:14px 16px;
+    display:flex; align-items:center; gap:12px;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+    animation:slideUp .3s ease-out;
+  `;
+  el.innerHTML = `
+    <div style="font-size:28px;flex-shrink:0">📲</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:700;color:#e8ecf5;margin-bottom:2px">Adicionar à tela inicial</div>
+      <div style="font-size:11px;color:#6b7394;line-height:1.4">Toque em <strong style="color:#9ba3c4">Compartilhar</strong> → <strong style="color:#9ba3c4">Adicionar à Tela</strong> para usar como app</div>
+    </div>
+    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#6b7394;font-size:20px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    if (el.parentElement) {
+      el.style.opacity = '0';
+      el.style.transition = 'opacity .4s';
+      setTimeout(() => el.remove(), 400);
+    }
+  }, 8000);
+}
+
 </script>
 </body>
 </html>
