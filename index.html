@@ -1418,39 +1418,79 @@ function showLoginSetup() {
 }
 
 function showWelcomeBanner() {
-  // Remove if already exists
-  const existing = document.getElementById('welcome-banner');
+  var existing = document.getElementById('welcome-banner');
   if (existing) return;
-  const banner = document.createElement('div');
-  banner.id = 'welcome-banner';
-  banner.style.cssText = `
-    position:fixed; top:0; left:0; right:0; z-index:10000;
-    background:linear-gradient(135deg,#1a2540,#0d1525);
-    border-bottom:1px solid rgba(79,142,247,.3);
-    padding:16px 20px; padding-top:calc(env(safe-area-inset-top,0px) + 16px);
-    display:flex; align-items:flex-start; gap:14px;
-    animation:slideDown .4s ease-out;
-  `;
-  banner.innerHTML = \`
-    <div style="font-size:32px;flex-shrink:0;margin-top:2px">👋</div>
-    <div style="flex:1;min-width:0">
-      <div style="font-size:15px;font-weight:700;color:#e8ecf5;margin-bottom:4px">Bem-vindo ao Minhas Contas!</div>
-      <div style="font-size:13px;color:#9ba3c4;line-height:1.5">Para proteger seus dados financeiros, <strong style="color:#e8ecf5">crie um PIN ou senha</strong> de acesso abaixo. Só você poderá ver suas informações.</div>
-    </div>
-    <button onclick="document.getElementById('welcome-banner').remove()" style="background:rgba(255,255,255,.08);border:none;color:#6b7394;font-size:16px;cursor:pointer;padding:6px 8px;border-radius:8px;flex-shrink:0;font-family:'Inter',sans-serif">✕</button>
-  \`;
-  document.body.appendChild(banner);
-  // Add slideDown animation
+
+  // Inject slideDown animation once
   if (!document.getElementById('welcome-anim-style')) {
-    const s = document.createElement('style');
+    var s = document.createElement('style');
     s.id = 'welcome-anim-style';
     s.textContent = '@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}';
     document.head.appendChild(s);
   }
-  // Auto-dismiss after 8 seconds
-  setTimeout(() => {
-    const el = document.getElementById('welcome-banner');
-    if (el) { el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(),400); }
+
+  var banner = document.createElement('div');
+  banner.id = 'welcome-banner';
+  banner.style.position = 'fixed';
+  banner.style.top = '0';
+  banner.style.left = '0';
+  banner.style.right = '0';
+  banner.style.zIndex = '10000';
+  banner.style.background = 'linear-gradient(135deg,#1a2540,#0d1525)';
+  banner.style.borderBottom = '1px solid rgba(79,142,247,.3)';
+  banner.style.padding = '16px 20px';
+  banner.style.paddingTop = 'calc(env(safe-area-inset-top,0px) + 14px)';
+  banner.style.display = 'flex';
+  banner.style.alignItems = 'flex-start';
+  banner.style.gap = '12px';
+  banner.style.animation = 'slideDown .4s ease-out';
+
+  var emoji = document.createElement('div');
+  emoji.style.fontSize = '28px';
+  emoji.style.flexShrink = '0';
+  emoji.textContent = '👋';
+
+  var body = document.createElement('div');
+  body.style.flex = '1';
+  body.style.minWidth = '0';
+
+  var title = document.createElement('div');
+  title.style.fontSize = '14px';
+  title.style.fontWeight = '700';
+  title.style.color = '#e8ecf5';
+  title.style.marginBottom = '3px';
+  title.textContent = 'Bem-vindo! Configure sua proteção';
+
+  var desc = document.createElement('div');
+  desc.style.fontSize = '12px';
+  desc.style.color = '#9ba3c4';
+  desc.style.lineHeight = '1.5';
+  desc.innerHTML = 'Crie um <strong style="color:#4f8ef7">PIN de 4 dígitos</strong> ou <strong style="color:#4f8ef7">senha</strong> para proteger seus dados financeiros.';
+
+  body.appendChild(title);
+  body.appendChild(desc);
+
+  var closeBtn = document.createElement('button');
+  closeBtn.style.background = 'rgba(255,255,255,.08)';
+  closeBtn.style.border = 'none';
+  closeBtn.style.color = '#6b7394';
+  closeBtn.style.fontSize = '16px';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.padding = '4px 7px';
+  closeBtn.style.borderRadius = '7px';
+  closeBtn.style.flexShrink = '0';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = function() { banner.remove(); };
+
+  banner.appendChild(emoji);
+  banner.appendChild(body);
+  banner.appendChild(closeBtn);
+  document.body.appendChild(banner);
+
+  // Auto-dismiss after 8s
+  setTimeout(function() {
+    var el = document.getElementById('welcome-banner');
+    if (el) { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(function(){ el.remove(); }, 400); }
   }, 8000);
 }
 
