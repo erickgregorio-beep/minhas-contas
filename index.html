@@ -409,31 +409,33 @@ body {
   position:fixed; inset:0; z-index:9999;
   background:var(--bg);
   display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  padding:32px 24px;
-  padding-top:calc(var(--safe-top) + 32px);
-  padding-bottom:calc(var(--safe-bot) + 32px);
+  align-items:center;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:0 24px;
+  padding-top:calc(env(safe-area-inset-top,20px) + 20px);
+  padding-bottom:calc(env(safe-area-inset-bottom,20px) + 20px);
 }
 #login-screen.hidden { display:none; }
 
 .login-logo {
-  font-size:56px; margin-bottom:6px;
+  font-size:44px; margin-bottom:4px; margin-top:8px;
   filter:drop-shadow(0 4px 24px rgba(79,142,247,.3));
 }
 .login-title {
-  font-size:26px; font-weight:800; text-align:center;
-  margin-bottom:6px; letter-spacing:-.5px;
+  font-size:22px; font-weight:800; text-align:center;
+  margin-bottom:4px; letter-spacing:-.5px;
 }
 .login-title em { color:var(--acc); font-style:normal; }
 .login-sub {
-  font-size:14px; color:var(--mut); text-align:center;
-  margin-bottom:36px; line-height:1.5; max-width:280px;
+  font-size:13px; color:var(--mut); text-align:center;
+  margin-bottom:20px; line-height:1.5; max-width:280px;
 }
 
 /* ── TABS ── */
 .login-tabs {
   display:flex; background:var(--sur2); border-radius:12px;
-  padding:3px; gap:2px; margin-bottom:28px; width:100%; max-width:320px;
+  padding:3px; gap:2px; margin-bottom:18px; width:100%; max-width:320px;
 }
 .login-tab {
   flex:1; padding:10px; border:none; border-radius:9px;
@@ -444,13 +446,13 @@ body {
 .login-tab.act { background:var(--sur); color:var(--txt); box-shadow:0 2px 8px rgba(0,0,0,.3); }
 
 /* ── PANELS ── */
-.login-panel { width:100%; max-width:320px; display:none; flex-direction:column; gap:14px; }
+.login-panel { width:100%; max-width:320px; display:none; flex-direction:column; gap:10px; }
 .login-panel.act { display:flex; }
 
 /* ── PIN PAD ── */
 .pin-display {
   display:flex; gap:12px; justify-content:center;
-  margin-bottom:4px;
+  margin-bottom:2px;
 }
 .pin-dot {
   width:14px; height:14px; border-radius:50%;
@@ -463,20 +465,22 @@ body {
 
 .pin-label {
   text-align:center; font-size:13px; color:var(--mut);
-  margin-bottom:16px; min-height:18px;
+  margin-bottom:12px; min-height:18px;
 }
 
 .pin-grid {
   display:grid; grid-template-columns:repeat(3,1fr);
-  gap:10px; width:100%;
+  gap:8px; width:100%;
 }
 .pin-key {
   aspect-ratio:1; border-radius:14px; border:1px solid var(--brd);
   background:var(--sur); color:var(--txt); font-size:22px;
   font-weight:600; cursor:pointer; font-family:'Inter',sans-serif;
   display:flex; align-items:center; justify-content:center;
-  transition:all .12s; -webkit-tap-highlight-color:transparent;
+  transition:background .12s, transform .12s, border-color .12s, color .12s;
+  -webkit-tap-highlight-color:transparent;
   flex-direction:column; gap:2px;
+  min-height:60px; max-height:80px;
 }
 .pin-key:active { transform:scale(.92); background:var(--sur2); }
 .pin-key.zero { grid-column:2; }
@@ -516,6 +520,21 @@ body {
 }
 .shake { animation:shake .4s ease; }
 
+
+/* ── Small screens (iPhone SE, 375px and below) ── */
+@media(max-height:700px) {
+  .login-logo { font-size:36px; margin-bottom:2px; margin-top:4px; }
+  .login-title { font-size:19px; margin-bottom:2px; }
+  .login-sub { font-size:12px; margin-bottom:14px; }
+  .login-tabs { margin-bottom:12px; }
+  .login-tab { padding:8px; font-size:12px; }
+  .pin-label { margin-bottom:8px; font-size:12px; }
+  .pin-key { font-size:20px; min-height:52px; }
+  .pin-key sub { font-size:7px; }
+  .pin-dot { width:12px; height:12px; }
+  .pin-display { margin-bottom:0; gap:10px; }
+  .pin-grid { gap:6px; }
+}
 </style>
 </head>
 <body>
