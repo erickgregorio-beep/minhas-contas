@@ -1337,8 +1337,6 @@ setInterval(()=>{if(cfg.binId&&cfg.apiKey)syncVoice();},60000);
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
-// Auth guards the app init — unlockApp() calls loadAll etc.
-initAuth();
 
 // ═══════════════════════════════════════════════════════════
 // AUTH SYSTEM
@@ -1387,15 +1385,54 @@ function initAuth() {
 }
 
 function showLoginSetup() {
-  document.getElementById('login-sub').textContent = 'Configure sua proteção para começar';
+  // Show welcome banner for first-time users
+  showWelcomeBanner();
+  document.getElementById('login-sub').textContent = 'Crie sua senha para proteger seus dados';
   document.getElementById('login-tabs').style.display = 'flex';
   document.getElementById('pin-label').textContent = 'Crie um PIN de 4 dígitos';
-  document.getElementById('pin-hint').textContent = '';
+  document.getElementById('pin-hint').innerHTML = '<span style="color:var(--acc)">👆 Primeira vez aqui — defina sua proteção abaixo</span>';
   document.getElementById('pass-btn').textContent = 'Criar Senha';
   document.getElementById('pass-hint').textContent = 'Mínimo 4 caracteres';
   document.getElementById('reset-btn').style.display = 'none';
   document.getElementById('reset-btn-pass').style.display = 'none';
   clearPinDisplay();
+}
+
+function showWelcomeBanner() {
+  // Remove if already exists
+  const existing = document.getElementById('welcome-banner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'welcome-banner';
+  banner.style.cssText = `
+    position:fixed; top:0; left:0; right:0; z-index:10000;
+    background:linear-gradient(135deg,#1a2540,#0d1525);
+    border-bottom:1px solid rgba(79,142,247,.3);
+    padding:16px 20px; padding-top:calc(env(safe-area-inset-top,0px) + 16px);
+    display:flex; align-items:flex-start; gap:14px;
+    animation:slideDown .4s ease-out;
+  `;
+  banner.innerHTML = \`
+    <div style="font-size:32px;flex-shrink:0;margin-top:2px">👋</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:700;color:#e8ecf5;margin-bottom:4px">Bem-vindo ao Minhas Contas!</div>
+      <div style="font-size:13px;color:#9ba3c4;line-height:1.5">Para proteger seus dados financeiros, <strong style="color:#e8ecf5">crie um PIN ou senha</strong> de acesso abaixo. Só você poderá ver suas informações.</div>
+    </div>
+    <button onclick="document.getElementById('welcome-banner').remove()" style="background:rgba(255,255,255,.08);border:none;color:#6b7394;font-size:16px;cursor:pointer;padding:6px 8px;border-radius:8px;flex-shrink:0;font-family:'Inter',sans-serif">✕</button>
+  \`;
+  document.body.appendChild(banner);
+  // Add slideDown animation
+  if (!document.getElementById('welcome-anim-style')) {
+    const s = document.createElement('style');
+    s.id = 'welcome-anim-style';
+    s.textContent = '@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}';
+    document.head.appendChild(s);
+  }
+  // Auto-dismiss after 8 seconds
+  setTimeout(() => {
+    const el = document.getElementById('welcome-banner');
+    if (el) { el.style.opacity='0'; el.style.transition='opacity .4s'; setTimeout(()=>el.remove(),400); }
+  }, 8000);
 }
 
 function showLoginUnlock(type) {
@@ -1449,11 +1486,29 @@ function updatePinDisplay() {
 function pinKey(digit) {
   if (authState.locked) { showLockTimer(); return; }
   if (authState.pinBuffer.length >= 4) return;
+  // Visual flash feedback on button
+  const btns = document.querySelectorAll('.pin-key');
+  btns.forEach(b => { if (b.textContent.trim().startsWith(digit)) { flashPinBtn(b); } });
   authState.pinBuffer += digit;
   updatePinDisplay();
+  // Haptic feedback on iOS
+  if (navigator.vibrate) navigator.vibrate(10);
   if (authState.pinBuffer.length === 4) {
-    setTimeout(() => handlePinComplete(), 120);
+    setTimeout(() => handlePinComplete(), 150);
   }
+}
+
+function flashPinBtn(btn) {
+  btn.style.background = 'var(--acc)';
+  btn.style.color = '#fff';
+  btn.style.borderColor = 'var(--acc)';
+  btn.style.transform = 'scale(0.91)';
+  setTimeout(() => {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    btn.style.transform = '';
+  }, 180);
 }
 
 function pinDel() {
@@ -1612,67 +1667,6 @@ function unlockApp() {
 }
 
 
-// ═══════════════════════════════════════════════════════════
-// PWA — Service Worker + Icon generation
-// ═══════════════════════════════════════════════════════════
-(function initPWA() {
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => {
-          console.log('[SW] Registered:', reg.scope);
-          // Check for updates
-          reg.addEventListener('updatefound', () => {
-            const newSW = reg.installing;
-            newSW.addEventListener('statechange', () => {
-              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                toast('✨ Atualização disponível — reabra o app');
-              }
-            });
-          });
-        })
-        .catch(err => console.log('[SW] Error:', err));
-    });
-  }
-
-  // Generate PNG icons from SVG for better iOS compat
-  function generateIcons() {
-    const svgUrl = './icon.svg';
-    [192, 512].forEach(size => {
-      const canvas = document.createElement('canvas');
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, size, size);
-        const pngUrl = canvas.toDataURL('image/png');
-        // Store generated PNG for manifest reference
-        try { sessionStorage.setItem('icon-' + size, pngUrl); } catch(e) {}
-      };
-      img.src = svgUrl;
-    });
-  }
-  generateIcons();
-
-  // Handle ?action=new shortcut from manifest
-  if (window.location.search.includes('action=new')) {
-    window.addEventListener('appReady', () => {
-      setTimeout(() => openAddModal('despesa'), 500);
-    });
-  }
-
-  // iOS "Add to Home Screen" prompt nudge (shown once)
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  const nudgeSeen = localStorage.getItem('pwa_nudge');
-  if (isIOS && !isStandalone && !nudgeSeen) {
-    setTimeout(() => {
-      showInstallNudge();
-      localStorage.setItem('pwa_nudge', '1');
-    }, 4000);
-  }
-})();
 
 function showInstallNudge() {
   const el = document.createElement('div');
@@ -1703,6 +1697,43 @@ function showInstallNudge() {
   }, 8000);
 }
 
+// ═══════════════════════════════════════════════════════════
+// BOOT — all functions defined, safe to init
+// ═══════════════════════════════════════════════════════════
+(function boot() {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          reg.addEventListener('updatefound', () => {
+            const sw = reg.installing;
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                toast('✨ Atualização disponível — reabra o app');
+              }
+            });
+          });
+        })
+        .catch(() => {});
+    });
+  }
+
+  // iOS install nudge (once)
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone && !localStorage.getItem('pwa_nudge')) {
+    setTimeout(() => { showInstallNudge(); localStorage.setItem('pwa_nudge','1'); }, 5000);
+  }
+
+  // Handle manifest shortcut ?action=new
+  if (window.location.search.includes('action=new')) {
+    window.addEventListener('appReady', () => setTimeout(() => openAddModal('despesa'), 400));
+  }
+
+  // Start auth — this is the single entry point
+  initAuth();
+})();
 </script>
 </body>
 </html>
