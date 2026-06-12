@@ -832,7 +832,10 @@ body {
         <input type="text" id="cfg-binid" placeholder="BIN ID" oninput="saveCfg()" style="background:var(--sur2);border:1px solid var(--brd);border-radius:10px;color:var(--txt);padding:10px 12px;font-size:13px;font-family:'JetBrains Mono',monospace;width:100%;margin-bottom:8px">
         <input type="text" id="cfg-apikey" placeholder="X-Master-Key" oninput="saveCfg()" style="background:var(--sur2);border:1px solid var(--brd);border-radius:10px;color:var(--txt);padding:10px 12px;font-size:13px;font-family:'JetBrains Mono',monospace;width:100%">
       </div>
-      <button onclick="clearAllData()" style="width:100%;padding:14px;background:rgba(247,92,92,.1);border:1px solid rgba(247,92,92,.2);border-radius:11px;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">🗑 Limpar todos os dados</button>
+      <div style="border-top:1px solid var(--brd);padding-top:14px">
+        <button onclick="showInstallNudge();closeSettings();" style="width:100%;padding:14px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:11px;color:var(--acc);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px">📲 Como instalar na tela inicial</button>
+        <button onclick="clearAllData()" style="width:100%;padding:14px;background:rgba(247,92,92,.1);border:1px solid rgba(247,92,92,.2);border-radius:11px;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">🗑 Limpar todos os dados</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1728,33 +1731,81 @@ function unlockApp() {
 
 
 function showInstallNudge() {
-  const el = document.createElement('div');
-  el.style.cssText = `
-    position:fixed; bottom:calc(var(--nav-h) + var(--safe-bot) + 12px);
-    left:12px; right:12px; z-index:800;
-    background:#1c2030; border:1px solid #252a3a;
-    border-radius:16px; padding:14px 16px;
-    display:flex; align-items:center; gap:12px;
-    box-shadow:0 8px 32px rgba(0,0,0,.5);
-    animation:slideUp .3s ease-out;
-  `;
-  el.innerHTML = `
-    <div style="font-size:28px;flex-shrink:0">📲</div>
-    <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:700;color:#e8ecf5;margin-bottom:2px">Adicionar à tela inicial</div>
-      <div style="font-size:11px;color:#6b7394;line-height:1.4">Toque em <strong style="color:#9ba3c4">Compartilhar</strong> → <strong style="color:#9ba3c4">Adicionar à Tela</strong> para usar como app</div>
-    </div>
-    <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#6b7394;font-size:20px;cursor:pointer;padding:4px;flex-shrink:0">✕</button>
-  `;
-  document.body.appendChild(el);
-  setTimeout(() => {
-    if (el.parentElement) {
-      el.style.opacity = '0';
-      el.style.transition = 'opacity .4s';
-      setTimeout(() => el.remove(), 400);
-    }
-  }, 8000);
+  // Already installed as PWA — skip
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+
+  var overlay = document.createElement('div');
+  overlay.id = 'install-guide';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end;';
+
+  // Dismiss on backdrop tap
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+
+  var sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#1c2030;border-radius:20px 20px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px)+24px);';
+
+  // Handle bar
+  var handle = document.createElement('div');
+  handle.style.cssText = 'width:36px;height:4px;background:#252a3a;border-radius:99px;margin:0 auto 18px;';
+
+  // Title
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:17px;font-weight:700;color:#e8ecf5;margin-bottom:6px;';
+  title.textContent = 'Adicionar à Tela Inicial';
+
+  // Subtitle
+  var sub = document.createElement('div');
+  sub.style.cssText = 'font-size:13px;color:#6b7394;margin-bottom:20px;line-height:1.5;';
+  sub.textContent = 'Use o app como se fosse nativo — sem barra do Safari, com ícone na tela.';
+
+  // Steps
+  var steps = [
+    { icon: '1', color: '#4f8ef7', text: 'Toque no botão', strong: '⬆ Compartilhar', after: ' na barra do Safari (ícone de quadrado com seta)' },
+    { icon: '2', color: '#4f8ef7', text: 'Role para baixo e toque em ', strong: '"Adicionar à Tela Inicial"', after: '' },
+    { icon: '3', color: '#34d87e', text: 'Toque em ', strong: '"Adicionar"', after: ' no canto superior direito' },
+  ];
+
+  var stepsWrap = document.createElement('div');
+  stepsWrap.style.cssText = 'display:flex;flex-direction:column;gap:12px;margin-bottom:20px;';
+
+  steps.forEach(function(s) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border-radius:12px;padding:12px;';
+
+    var num = document.createElement('div');
+    num.style.cssText = 'width:28px;height:28px;border-radius:50%;background:' + s.color + ';color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
+    num.textContent = s.icon;
+
+    var txt = document.createElement('div');
+    txt.style.cssText = 'font-size:13px;color:#9ba3c4;line-height:1.4;';
+    txt.innerHTML = s.text + '<strong style="color:#e8ecf5">' + s.strong + '</strong>' + s.after;
+
+    row.appendChild(num);
+    row.appendChild(txt);
+    stepsWrap.appendChild(row);
+  });
+
+  // Arrow indicator pointing to Safari share button
+  var arrow = document.createElement('div');
+  arrow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);border-radius:12px;margin-bottom:16px;';
+  arrow.innerHTML = '<span style="font-size:22px">⬆️</span><span style="font-size:13px;color:#4f8ef7;font-weight:600">O botão Compartilhar fica na barra inferior do Safari</span>';
+
+  // Close button
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'width:100%;padding:14px;border-radius:12px;border:none;background:#252a3a;color:#9ba3c4;font-size:14px;font-weight:600;cursor:pointer;font-family:\'Inter\',sans-serif;';
+  closeBtn.textContent = 'Entendi';
+  closeBtn.onclick = function() { overlay.remove(); };
+
+  sheet.appendChild(handle);
+  sheet.appendChild(title);
+  sheet.appendChild(sub);
+  sheet.appendChild(stepsWrap);
+  sheet.appendChild(arrow);
+  sheet.appendChild(closeBtn);
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
 }
+
 
 // ═══════════════════════════════════════════════════════════
 // BOOT — all functions defined, safe to init
@@ -1778,11 +1829,12 @@ function showInstallNudge() {
     });
   }
 
-  // iOS install nudge (once)
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (isIOS && !isStandalone && !localStorage.getItem('pwa_nudge')) {
-    setTimeout(() => { showInstallNudge(); localStorage.setItem('pwa_nudge','1'); }, 5000);
+  // iOS install nudge — show after 5s on first visit, and every time if not installed
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isAndroid = /android/i.test(navigator.userAgent);
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!isStandalone && (isIOS || isAndroid) && !localStorage.getItem('pwa_nudge')) {
+    setTimeout(function() { showInstallNudge(); localStorage.setItem('pwa_nudge','1'); }, 5000);
   }
 
   // Handle manifest shortcut ?action=new
